@@ -125,3 +125,15 @@ When iterating on a skill in this repo without re-installing every time:
 
 Symlinks each skill folder into `~/.claude/skills/`. Edit, save, Claude Code
 picks up the change immediately.
+
+## Contributing
+
+`main` is protected. All changes — including from the repo owner — go through a pull request:
+
+```bash
+git checkout -b feature/xyz
+# ...edit...
+git push -u origin feature/xyz
+gh pr create --fill
+gh pr merge --squash --delete-branch
+```
