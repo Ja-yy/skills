@@ -1,15 +1,13 @@
 #!/usr/bin/env bash
-# Claude Code statusline — shows total tokens used in the current session.
+# Claude Code statusline — minimal: tokens + 5-hour session %.
 #
-# Reads context_window.current_usage from the stdin JSON Claude Code passes
-# in (per https://code.claude.com/docs/en/statusline.md). Falls back to
-# parsing the transcript JSONL if context_window is absent (older versions).
+# Output example:  50K 5%
+#
+# Reads stdin JSON per https://code.claude.com/docs/en/statusline.md.
+# Falls back to walking the transcript JSONL if context_window is missing.
 #
 # Install:
 #   ./scripts/install-statusline.sh
-# Or manually wire ~/.claude/settings.json:
-#   "statusLine": { "type": "command",
-#                   "command": "bash ~/.claude/statusline-tokens.sh" }
 
 set -u
 export STATUSLINE_INPUT="$(cat)"
@@ -24,7 +22,6 @@ except Exception:
 
 usage = ((payload.get("context_window") or {}).get("current_usage")) or {}
 
-# Fallback: walk the transcript if the live JSON didn't carry usage.
 if not usage:
     tp = payload.get("transcript_path")
     if tp and os.path.isfile(tp):
@@ -44,20 +41,31 @@ if not usage:
         except Exception:
             pass
 
-total = (
+total_tokens = (
     int(usage.get("input_tokens") or 0)
     + int(usage.get("output_tokens") or 0)
-    + int(usage.get("cache_creation_input_tokens") or 0)
     + int(usage.get("cache_read_input_tokens") or 0)
+    + int(usage.get("cache_creation_input_tokens") or 0)
 )
 
-if total >= 1_000_000:
-    num = f"{total/1_000_000:.1f}M"
-elif total >= 1_000:
-    num = f"{total/1_000:.1f}K"
-else:
-    num = f"{total}"
+five_h_pct = ((payload.get("rate_limits") or {}).get("five_hour") or {}).get("used_percentage")
 
-# Cyan number, dim "tk" suffix.
-print(f"\033[01;36m{num}\033[00m \033[02mtk\033[00m", end="")
+def fmt_tokens(n):
+    if n >= 1_000_000: return f"{n/1_000_000:.1f}M"
+    if n >= 1_000:     return f"{n/1_000:.0f}K"
+    return str(n)
+
+# Dim ANSI colors — readable but not eye-catching.
+TOK_COLOR = "\033[2;36m"   # dim cyan   (tokens)
+PCT_COLOR = "\033[2;35m"   # dim magenta (session %)
+RESET     = "\033[0m"
+
+parts = []
+if total_tokens:
+    parts.append(f"{TOK_COLOR}{fmt_tokens(total_tokens)}{RESET}")
+if five_h_pct is not None:
+    parts.append(f"{PCT_COLOR}{float(five_h_pct):.0f}%{RESET}")
+
+if parts:
+    print(" ".join(parts), end="")
 PY
