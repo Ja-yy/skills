@@ -97,11 +97,21 @@ present in an earlier bootstrap).
 **External** — add a `npx skills add <github-tree-url>` line in
 `bootstrap.sh`, push, then re-run on each machine.
 
-## Token-counter statusline
+## Statusline (tokens + session %)
 
-A minimal Claude Code statusline that shows just the current session's token
-total — nothing else. Reads the running transcript JSONL and renders e.g.
-`51.8K tk`.
+A minimal Claude Code statusline. Two values, one space, no labels:
+
+```
+50K 5%
+```
+
+- First number — total tokens in the current API call (auto-scaled K/M)
+- Second number — Claude.ai 5-hour rolling-window usage %
+
+The session % only renders for Pro/Max accounts and only after the first model
+response in a session — it reads `rate_limits.five_hour.used_percentage` from
+the statusline JSON, which is absent before that point. On non-subscription
+accounts that segment is simply omitted.
 
 Install:
 
