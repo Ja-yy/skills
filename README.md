@@ -63,6 +63,7 @@ edit it directly.
 | ---------------- | ------------------------------------------------------------------------------------- |
 | `--project`      | Install at project scope (`./.claude/skills`) instead of global                       |
 | `--no-external`  | Skip externals, install only this repo                                                |
+| `--no-mods`      | Skip installing the Claude Code mods from `mods/`                                     |
 | `--list`         | Print what would be installed, install nothing                                        |
 | `--agent NAME`   | Target a specific coding agent (repeatable). Default: `claude-code`                   |
 
@@ -96,6 +97,39 @@ present in an earlier bootstrap).
 
 **External** — add a `npx skills add <github-tree-url>` line in
 `bootstrap.sh`, push, then re-run on each machine.
+
+## Mods (`mods/`)
+
+Mods change Claude Code itself: popups, slash commands, tools Claude can call.
+This repo is also a Claude Code marketplace, `ja-yy-mods`
+(`.claude-plugin/marketplace.json`), listing each mod under `mods/<name>/`.
+
+| Mod | What it does |
+| --- | --- |
+| [`concept-cards`](mods/concept-cards) | When Claude names a design pattern, principle, algorithm or technique, a popup shows a short card (who made it, purpose, pros, cons, when to use) and saves it to `~/concept-wiki/<category>/<name>.md`. `/concepts` reopens the popup; `/concepts <name>` opens a saved card. |
+
+`bootstrap.sh` installs them. To install by hand from GitHub:
+
+```bash
+claude plugin marketplace add Ja-yy/skills
+claude plugin install concept-cards@ja-yy-mods
+```
+
+To work on a mod, install from your clone instead. Claude Code then reads the
+mod straight from the folder, so an edit applies after `/reload-plugins` with
+no reinstall:
+
+```bash
+claude plugin marketplace add ~/code/skills
+claude plugin install concept-cards@ja-yy-mods
+claude plugin validate mods/concept-cards
+(cd mods/concept-cards && claude plugin test .)
+```
+
+**Adding a mod**: put it under `mods/<name>/` (`.claude-plugin/plugin.json`,
+`hooks/hooks.json`, `hooks/register.tsx`), add an entry to
+`.claude-plugin/marketplace.json` and a row above, and add an install line to
+`bootstrap.sh`.
 
 ## Statusline (tokens + session %)
 
