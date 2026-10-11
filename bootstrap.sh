@@ -9,6 +9,7 @@ set -euo pipefail
 
 SCOPE_FLAG="-g"
 INCLUDE_EXTERNAL=true
+INCLUDE_MODS=true
 LIST_ONLY=false
 AGENTS=()
 
@@ -16,14 +17,16 @@ while [[ $# -gt 0 ]]; do
   case "$1" in
     --project)      SCOPE_FLAG=""; shift ;;
     --no-external)  INCLUDE_EXTERNAL=false; shift ;;
+    --no-mods)      INCLUDE_MODS=false; shift ;;
     --list)         LIST_ONLY=true; shift ;;
     --agent)        AGENTS+=("$2"); shift 2 ;;
     -h|--help)
       cat <<EOF
-Usage: bootstrap.sh [--project] [--no-external] [--list] [--agent NAME]...
+Usage: bootstrap.sh [--project] [--no-external] [--no-mods] [--list] [--agent NAME]...
 
   --project       Install at project scope instead of global (~/.claude/skills)
   --no-external   Skip external skills, install only Ja-yy/skills
+  --no-mods       Skip the Claude Code mods (mods/, marketplace ja-yy-mods)
   --list          Print what would be installed, install nothing
   --agent NAME    Target this coding agent (repeatable). Default: claude-code
                   Examples: claude-code, codex, cursor, amp, cline, opencode,
@@ -108,6 +111,33 @@ if $INCLUDE_EXTERNAL; then
   # SKIPPED: skills/productivity/caveman — conflicts with JuliusBrussee/caveman above (same skill name).
   add https://github.com/mattpocock/skills/tree/main/skills/productivity/grill-me
   add https://github.com/mattpocock/skills/tree/main/skills/productivity/write-a-skill
+fi
+
+if $INCLUDE_MODS; then
+  echo
+  echo "==> Installing Claude Code mods"
+  MODS=(concept-cards)
+  if $LIST_ONLY; then
+    for m in "${MODS[@]}"; do
+      printf "  would install: %-35s  %s\n" "$m" "Ja-yy/skills (mods/$m)"
+    done
+  elif ! command -v claude >/dev/null 2>&1; then
+    echo "  [skip] claude CLI not found; install Claude Code, then re-run" >&2
+  else
+    claude plugin marketplace add Ja-yy/skills >/dev/null 2>&1 || true
+    for m in "${MODS[@]}"; do
+      log="$(mktemp)"
+      if claude plugin install "$m@ja-yy-mods" --scope user >"$log" 2>&1; then
+        INSTALLED+=("$m")
+        printf "  [ok]   %s\n" "$m"
+        rm -f "$log"
+      else
+        FAILED+=("$m")
+        FAIL_LOGS+=("$log")
+        printf "  [FAIL] %s\n" "$m" >&2
+      fi
+    done
+  fi
 fi
 
 if $LIST_ONLY; then

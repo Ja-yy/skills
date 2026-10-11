@@ -1,0 +1,14 @@
+{
+  "name": "concept-cards",
+  "version": "0.1.0",
+  "description": "Pops up a quick wiki card whenever Claude names a design pattern, principle or algorithm, and saves it to a folder you keep",
+  "types": "./types/index.d.ts",
+  "userConfig": {
+    "folder": {
+      "type": "string",
+      "title": "Wiki folder",
+      "description": "Where concept cards are saved as Markdown (~ is your home folder)",
+      "default": "~/concept-wiki"
+    }
+  }
+}

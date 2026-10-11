@@ -1,0 +1,12 @@
+{
+  "name": "ja-yy-mods",
+  "owner": { "name": "Jay Patel" },
+  "description": "Ja-yy's Claude Code mods",
+  "plugins": [
+    {
+      "name": "concept-cards",
+      "source": "./mods/concept-cards",
+      "description": "Pops up a quick wiki card whenever Claude names a design pattern, principle or algorithm, and saves it to ~/concept-wiki"
+    }
+  ]
+}
